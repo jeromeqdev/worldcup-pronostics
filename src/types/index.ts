@@ -1,7 +1,3 @@
-// ============================================================
-// Types globaux de l'application
-// ============================================================
-
 export type MatchPhase =
   | "group"
   | "round_of_16"
@@ -14,7 +10,6 @@ export type MatchStatus = "upcoming" | "live" | "finished";
 
 export type PredictedWinner = "home" | "away" | "draw";
 
-// ---- Profil utilisateur ----
 export interface Profile {
   id: string;
   email: string;
@@ -27,13 +22,11 @@ export interface Profile {
   updated_at: string;
 }
 
-// ---- Groupe (phase de poules) ----
 export interface Group {
   id: string;
   name: string;
 }
 
-// ---- Équipe ----
 export interface Team {
   id: string;
   name: string;
@@ -42,7 +35,6 @@ export interface Team {
   group_id?: string;
 }
 
-// ---- Stade ----
 export interface Stadium {
   id: string;
   name: string;
@@ -51,7 +43,6 @@ export interface Stadium {
   capacity?: number;
 }
 
-// ---- Match ----
 export interface Match {
   id: string;
   match_number: number;
@@ -68,7 +59,6 @@ export interface Match {
   away_score_extra?: number;
   created_at: string;
   updated_at: string;
-  // Relations jointes
   home_team?: Team;
   away_team?: Team;
   stadium?: Stadium;
@@ -76,7 +66,6 @@ export interface Match {
   user_prediction?: Prediction | null;
 }
 
-// ---- Pronostic ----
 export interface Prediction {
   id: string;
   user_id: string;
@@ -87,11 +76,9 @@ export interface Prediction {
   points?: number;
   created_at: string;
   updated_at: string;
-  // Relations
   profile?: Profile;
 }
 
-// ---- Classement ----
 export interface Ranking {
   id: string;
   user_id: string;
@@ -102,11 +89,9 @@ export interface Ranking {
   predictions_count: number;
   rank?: number;
   updated_at: string;
-  // Relations
   profile?: Profile;
 }
 
-// ---- Libellés des phases ----
 export const PHASE_LABELS: Record<MatchPhase, string> = {
   group: "Phase de groupes",
   round_of_16: "Huitièmes de finale",
@@ -122,7 +107,6 @@ export const STATUS_LABELS: Record<MatchStatus, string> = {
   finished: "Terminé",
 };
 
-// ---- Barème de points ----
 export const POINTS = {
   EXACT_SCORE: 5,
   CORRECT_WINNER: 3,

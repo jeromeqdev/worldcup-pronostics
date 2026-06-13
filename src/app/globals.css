@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-surface-900 text-gray-100 font-body antialiased;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(251, 191, 36, 0.04) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3 { @apply font-display tracking-wide; }
+}
+
+@layer components {
+  .card { @apply bg-surface-800 border border-surface-600 rounded-xl p-4; }
+  .card-hover { @apply card transition-all duration-200 hover:border-pitch-700 hover:bg-surface-700 cursor-pointer; }
+  .badge-upcoming { @apply bg-surface-600 text-gray-300 text-xs px-2 py-0.5 rounded-full font-medium; }
+  .badge-live { @apply bg-red-500/20 text-red-400 border border-red-500/30 text-xs px-2 py-0.5 rounded-full font-medium; }
+  .badge-finished { @apply bg-pitch-900/40 text-pitch-400 border border-pitch-800 text-xs px-2 py-0.5 rounded-full font-medium; }
+  .btn-primary { @apply bg-pitch-600 hover:bg-pitch-500 text-white font-semibold px-4 py-2 rounded-lg transition-all duration-150 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed; }
+  .btn-secondary { @apply bg-surface-700 hover:bg-surface-600 border border-surface-500 text-gray-200 font-medium px-4 py-2 rounded-lg transition-all duration-150 active:scale-95; }
+  .btn-ghost { @apply text-gray-400 hover:text-gray-100 hover:bg-surface-700 px-3 py-1.5 rounded-lg transition-colors duration-150; }
+  .input { @apply bg-surface-700 border border-surface-500 text-gray-100 rounded-lg px-3 py-2 w-full placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-pitch-600 focus:border-transparent transition-all duration-150; }
+  .score-input { @apply w-14 text-center text-xl font-bold bg-surface-700 border border-surface-500 text-gray-100 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-pitch-600; }
+  .points-badge { @apply inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold; }
+  .points-5 { @apply bg-gold-500/20 text-gold-400 border border-gold-500/30; }
+  .points-3 { @apply bg-pitch-600/20 text-pitch-400 border border-pitch-600/30; }
+  .points-2 { @apply bg-blue-500/20 text-blue-400 border border-blue-500/30; }
+  .points-0 { @apply bg-red-500/10 text-red-500 border border-red-500/20; }
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.live-dot { animation: live-pulse 1.5s ease-in-out infinite; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-surface-500 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-surface-400; }

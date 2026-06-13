@@ -1,4 +1,3 @@
-// middleware.ts — Rafraîchit la session Supabase à chaque requête
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -26,11 +25,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  // Routes protégées nécessitant une connexion
   const protectedPaths = ["/admin"];
   const isProtected = protectedPaths.some((p) =>
     request.nextUrl.pathname.startsWith(p)

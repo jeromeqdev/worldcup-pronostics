@@ -10,7 +10,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Palette principale — vert football sur fond sombre
         pitch: {
           50: "#f0fdf4",
           100: "#dcfce7",
@@ -40,7 +39,6 @@ const config: Config = {
       animation: {
         "fade-in": "fadeIn 0.3s ease-in-out",
         "slide-up": "slideUp 0.4s ease-out",
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       keyframes: {
         fadeIn: {

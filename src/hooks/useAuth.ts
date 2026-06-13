@@ -1,5 +1,4 @@
 "use client";
-// hooks/useAuth.ts — Gestion de l'authentification côté client
 
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -51,7 +50,6 @@ export function useAuth(): AuthState & {
   }, [supabase, fetchProfile]);
 
   useEffect(() => {
-    // Chargement initial
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         const profile = await fetchProfile(user.id);
@@ -66,7 +64,6 @@ export function useAuth(): AuthState & {
       }
     });
 
-    // Écoute des changements d'auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {

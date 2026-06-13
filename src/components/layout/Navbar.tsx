@@ -1,5 +1,4 @@
 "use client";
-// components/layout/Navbar.tsx
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -30,10 +29,8 @@ export function Navbar() {
     <header className="sticky top-0 z-50 bg-surface-900/90 backdrop-blur-md border-b border-surface-700">
       <div className="container mx-auto px-4 max-w-6xl">
         <div className="flex items-center justify-between h-14">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-pitch-600 rounded-lg flex items-center justify-center
-                            group-hover:bg-pitch-500 transition-colors">
+            <div className="w-8 h-8 bg-pitch-600 rounded-lg flex items-center justify-center group-hover:bg-pitch-500 transition-colors">
               <span className="text-lg leading-none">⚽</span>
             </div>
             <span className="font-display font-bold text-lg tracking-wider text-white hidden sm:block">
@@ -41,7 +38,6 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Navigation centrale */}
           <nav className="flex items-center gap-1">
             {NAV_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
@@ -74,25 +70,15 @@ export function Navbar() {
             )}
           </nav>
 
-          {/* Auth côté droit */}
           <div className="flex items-center gap-2">
             {loading ? (
               <div className="w-8 h-8 rounded-full bg-surface-600 animate-pulse" />
             ) : user && profile ? (
               <div className="flex items-center gap-2">
                 <Link href="/profile" className="flex items-center gap-2 btn-ghost">
-                  {profile.avatar_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.pseudo}
-                      className="w-7 h-7 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-pitch-700 flex items-center justify-center">
-                      <User size={14} className="text-pitch-300" />
-                    </div>
-                  )}
+                  <div className="w-7 h-7 rounded-full bg-pitch-700 flex items-center justify-center">
+                    <User size={14} className="text-pitch-300" />
+                  </div>
                   <span className="text-sm font-medium text-gray-300 hidden sm:block">
                     {profile.pseudo}
                   </span>
