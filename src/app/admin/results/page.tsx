@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { Match } from "@/types";
 import { formatKickoff } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { Save, Loader } from "lucide-react";
 
-interface MatchRow extends Match {
+interface MatchRow {
+  id: string;
+  match_number: number;
+  kickoff_time: string;
+  status: string;
+  home_score?: number;
+  away_score?: number;
   home_team?: { name: string; country_code: string };
   away_team?: { name: string; country_code: string };
 }
@@ -39,7 +44,7 @@ export default function AdminResultsPage() {
     const awayScore = ed.away === "" ? null : parseInt(ed.away);
     const { error } = await supabase.from("matches").update({ home_score: homeScore, away_score: awayScore, status: ed.status, updated_at: new Date().toISOString() }).eq("id", matchId);
     setSaving(null);
-    if (error) { toast.error("Erreur lors de la sauvegarde"); } else { toast.success("Résultat enregistré — classement recalculé !"); fetchMatches(); }
+    if (error) { toast.error("Erreur lors de la sauvegarde"); } else { toast.success("Résultat enregistré !"); fetchMatches(); }
   };
 
   const update = (matchId: string, field: "home" | "away" | "status", value: string) => {
@@ -64,9 +69,7 @@ export default function AdminResultsPage() {
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs text-gray-500 mb-1">Match #{m.match_number} · {formatKickoff(m.kickoff_time)}</div>
-                  <div className="font-semibold text-gray-200">
-                    {m.home_team?.name} vs {m.away_team?.name}
-                  </div>
+                  <div className="font-semibold text-gray-200">{m.home_team?.name} vs {m.away_team?.name}</div>
                 </div>
                 <div className="flex items-center gap-3">
                   <input type="number" min="0" value={ed.home} onChange={(e) => update(m.id, "home", e.target.value)} className="score-input w-12" placeholder="–" />
