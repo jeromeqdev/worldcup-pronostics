@@ -9,32 +9,46 @@ import { UserPlus } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "", confirm: "", first_name: "", last_name: "", pseudo: "" });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [pseudo, setPseudo] = useState("");
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password !== form.confirm) { toast.error("Les mots de passe ne correspondent pas"); return; }
-    if (form.password.length < 8) { toast.error("Mot de passe trop court (8 caractères min)"); return; }
+    if (password !== confirm) { toast.error("Les mots de passe ne correspondent pas"); return; }
+    if (password.length < 8) { toast.error("Mot de passe trop court (8 caractères min)"); return; }
     setLoading(true);
-    const { data: existing } = await supabase.from("profiles").select("id").eq("pseudo", form.pseudo.trim()).single();
+
+    const { data: existing } = await supabase.from("profiles").select("id").eq("pseudo", pseudo.trim()).maybeSingle();
     if (existing) { toast.error("Ce pseudo est déjà pris"); setLoading(false); return; }
-    const { data, error } = await supabase.auth.signUp({ email: form.email.trim(), password: form.password });
+
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
     if (error || !data.user) { toast.error(error?.message ?? "Erreur lors de la création du compte"); setLoading(false); return; }
-    const { error: profileError } = await supabase.from("profiles").insert({ id: data.user.id, email: form.email.trim(), first_name: form.first_name.trim(), last_name: form.last_name.trim(), pseudo: form.pseudo.trim(), is_admin: false });
-    if (profileError) { toast.error("Erreur lors de la création du profil"); setLoading(false); return; }
+
+    const { error: profileError } = await supabase.from("profiles").insert({
+      id: data.user.id,
+      email: email.trim(),
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      pseudo: pseudo.trim(),
+      is_admin: false,
+    });
+
+    if (profileError) {
+      toast.error("Erreur profil : " + profileError.message);
+      setLoading(false);
+      return;
+    }
+
     toast.success("Compte créé avec succès !");
     router.push("/");
     router.refresh();
   };
-
-  const Field = ({ label, name, type = "text", placeholder }: { label: string; name: keyof typeof form; type?: string; placeholder?: string }) => (
-    <div>
-      <label className="block text-sm text-gray-400 mb-1.5">{label}</label>
-      <input type={type} required value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} placeholder={placeholder} className="input" />
-    </div>
-  );
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center py-8">
@@ -46,13 +60,31 @@ export default function RegisterPage() {
         </div>
         <form onSubmit={handleRegister} className="card space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Prénom" name="first_name" placeholder="Jean" />
-            <Field label="Nom" name="last_name" placeholder="Dupont" />
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">Prénom</label>
+              <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jean" className="input" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1.5">Nom</label>
+              <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Dupont" className="input" />
+            </div>
           </div>
-          <Field label="Pseudo" name="pseudo" placeholder="Pepito68" />
-          <Field label="Email" name="email" type="email" placeholder="jean@email.com" />
-          <Field label="Mot de passe" name="password" type="password" placeholder="8 caractères min" />
-          <Field label="Confirmer le mot de passe" name="confirm" type="password" placeholder="••••••••" />
+          <div>
+            <label className="block text-sm text-gray-400 mb-1.5">Pseudo</label>
+            <input type="text" required value={pseudo} onChange={(e) => setPseudo(e.target.value)} placeholder="Pepito68" className="input" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1.5">Email</label>
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jean@email.com" className="input" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1.5">Mot de passe</label>
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="8 caractères min (lettres + chiffres)" className="input" />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1.5">Confirmer le mot de passe</label>
+            <input type="password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="••••••••" className="input" />
+          </div>
           <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2 py-2.5">
             {loading ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <UserPlus size={16} />}
             {loading ? "Création..." : "Créer mon compte"}
