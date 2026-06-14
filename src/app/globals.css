@@ -47,4 +47,4 @@
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { @apply bg-surface-500 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply bg-surface-400; }
+::-webkit-scrollbar-thumb:hover { @apply bg-surface-500; }
