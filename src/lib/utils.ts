@@ -6,12 +6,43 @@ export function cn(...inputs: string[]) {
   return inputs.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
+// Heure française (UTC+2 en été)
 export function formatKickoff(dateStr: string): string {
-  return format(new Date(dateStr), "dd MMM yyyy • HH:mm", { locale: fr });
+  return format(new Date(dateStr), "dd MMM yyyy • HH:mm", { locale: fr, timeZone: "Europe/Paris" } as any);
 }
 
 export function formatKickoffShort(dateStr: string): string {
-  return format(new Date(dateStr), "dd/MM • HH:mm");
+  return format(new Date(dateStr), "dd/MM • HH:mm", { locale: fr } as any);
+}
+
+export function formatKickoffFr(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function formatDateFr(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+export function formatTimeFr(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export function timeFromNow(dateStr: string): string {
@@ -28,12 +59,7 @@ export function getPredictedWinner(homeScore: number, awayScore: number): Predic
   return "draw";
 }
 
-export function calculatePoints(
-  predHome: number,
-  predAway: number,
-  actualHome: number,
-  actualAway: number
-): number {
+export function calculatePoints(predHome: number, predAway: number, actualHome: number, actualAway: number): number {
   if (predHome === actualHome && predAway === actualAway) return 5;
   const predWinner = getPredictedWinner(predHome, predAway);
   const actualWinner = getPredictedWinner(actualHome, actualAway);

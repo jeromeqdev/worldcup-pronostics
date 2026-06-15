@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { Match, MatchPhase } from "@/types";
 import { PHASE_LABELS } from "@/types";
 import Link from "next/link";
-import { formatKickoff } from "@/lib/utils";
+import { formatTimeFr, formatDateFr, canPredict } from "@/lib/utils";
 import { MapPin, ChevronRight } from "lucide-react";
+import { Countdown } from "@/components/ui/Countdown";
 
 export const revalidate = 30;
 
@@ -17,10 +18,12 @@ function FlagImg({ code }: { code?: string }) {
 function MatchCard({ match: m }: { match: Match }) {
   const isFinished = m.status === "finished";
   const isLive = m.status === "live";
+  const predictable = canPredict(m);
+
   return (
     <Link href={`/matches/${m.id}`} className="card-hover block">
       <div className="flex items-center gap-3">
-        <div className="w-20 shrink-0 text-center">
+        <div className="w-24 shrink-0 text-center">
           {isFinished ? (
             <div className="font-display font-bold text-xl text-white">{m.home_score} - {m.away_score}</div>
           ) : isLive ? (
@@ -28,12 +31,16 @@ function MatchCard({ match: m }: { match: Match }) {
               <span className="w-1.5 h-1.5 rounded-full bg-red-400 live-dot" />Live
             </span>
           ) : (
-            <div className="text-xs text-gray-400">{formatKickoff(m.kickoff_time).split("•")[1]?.trim()}</div>
+            <div className="font-bold text-pitch-400 text-sm">{formatTimeFr(m.kickoff_time)}</div>
           )}
-          <div className="text-xs text-gray-600 mt-0.5">{formatKickoff(m.kickoff_time).split("•")[0]?.trim()}</div>
+          {!isFinished && !isLive && predictable && (
+            <div className="mt-1 flex justify-center">
+              <Countdown kickoffTime={m.kickoff_time} />
+            </div>
+          )}
         </div>
         <div className="flex-1 flex items-center gap-2 justify-center">
-          <div className={`flex items-center gap-2 flex-row-reverse`}>
+          <div className="flex items-center gap-2 flex-row-reverse">
             {m.home_team?.country_code && <FlagImg code={m.home_team.country_code} />}
             <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.home_team?.name ?? "—"}</span>
           </div>
@@ -66,15 +73,13 @@ export default async function MatchesPage({
     .order("kickoff_time", { ascending: true });
   const matches = (data ?? []) as Match[];
 
-  // Vue chronologique groupée par date
   const byDate = matches.reduce((acc, m) => {
-    const date = new Date(m.kickoff_time).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    const date = formatDateFr(m.kickoff_time);
     if (!acc[date]) acc[date] = [];
     acc[date].push(m);
     return acc;
   }, {} as Record<string, Match[]>);
 
-  // Vue par groupe
   const byPhase = PHASE_ORDER.reduce((acc, phase) => {
     const phaseMatches = matches.filter((m) => m.phase === phase);
     if (phaseMatches.length > 0) acc[phase] = phaseMatches;
@@ -93,9 +98,8 @@ export default async function MatchesPage({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-4xl font-bold text-white tracking-wide">MATCHS</h1>
-          <p className="text-gray-500 text-sm mt-1">{matches.length} matchs au programme</p>
+          <p className="text-gray-500 text-sm mt-1">{matches.length} matchs · heures françaises (CET)</p>
         </div>
-        {/* Toggle vue */}
         <div className="flex gap-2 bg-surface-800 border border-surface-600 rounded-lg p-1">
           <Link href="?vue=chrono" className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${vue === "chrono" ? "bg-pitch-600 text-white" : "text-gray-400 hover:text-gray-200"}`}>
             📅 Par date
@@ -106,7 +110,6 @@ export default async function MatchesPage({
         </div>
       </div>
 
-      {/* VUE CHRONOLOGIQUE */}
       {vue === "chrono" && (
         <div className="space-y-6">
           {Object.entries(byDate).map(([date, dayMatches]) => (
@@ -122,7 +125,6 @@ export default async function MatchesPage({
         </div>
       )}
 
-      {/* VUE PAR GROUPE */}
       {vue === "groupe" && (
         <div className="space-y-8">
           {Object.keys(byGroup).length > 0 && (
