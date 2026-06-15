@@ -11,16 +11,7 @@ const PHASE_ORDER: MatchPhase[] = ["group","round_of_16","quarter_final","semi_f
 
 function FlagImg({ code }: { code?: string }) {
   if (!code) return null;
-  return <img src={`https://flagcdn.com/24x18/${code.toLowerCase().replace("gb-eng","gb")}.png`} alt={code} width={24} height={18} className="rounded-sm" />;
-}
-
-function TeamDisplay({ name, code, align }: { name?: string; code?: string; align: "left" | "right" }) {
-  return (
-    <div className={`flex items-center gap-2 ${align === "right" ? "flex-row-reverse" : ""}`}>
-      {code && <FlagImg code={code} />}
-      <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{name ?? "—"}</span>
-    </div>
-  );
+  return <img src={`https://flagcdn.com/24x18/${code.toLowerCase().replace("gb-eng","gb").replace("gb-sct","gb")}.png`} alt={code} width={24} height={18} className="rounded-sm" />;
 }
 
 function MatchCard({ match: m }: { match: Match }) {
@@ -42,9 +33,15 @@ function MatchCard({ match: m }: { match: Match }) {
           <div className="text-xs text-gray-600 mt-0.5">{formatKickoff(m.kickoff_time).split("•")[0]?.trim()}</div>
         </div>
         <div className="flex-1 flex items-center gap-2 justify-center">
-          <TeamDisplay name={m.home_team?.name} code={m.home_team?.country_code} align="right" />
+          <div className={`flex items-center gap-2 flex-row-reverse`}>
+            {m.home_team?.country_code && <FlagImg code={m.home_team.country_code} />}
+            <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.home_team?.name ?? "—"}</span>
+          </div>
           <span className="text-gray-600 text-xs font-bold">VS</span>
-          <TeamDisplay name={m.away_team?.name} code={m.away_team?.country_code} align="left" />
+          <div className="flex items-center gap-2">
+            {m.away_team?.country_code && <FlagImg code={m.away_team.country_code} />}
+            <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.away_team?.name ?? "—"}</span>
+          </div>
         </div>
         <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500 w-24 shrink-0 justify-end">
           <MapPin size={11} />
@@ -56,15 +53,34 @@ function MatchCard({ match: m }: { match: Match }) {
   );
 }
 
-export default async function MatchesPage() {
+export default async function MatchesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vue?: string }>;
+}) {
+  const { vue = "chrono" } = await searchParams;
   const supabase = await createClient();
-  const { data } = await supabase.from("matches").select("*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stadium:stadiums(*), group:groups(*)").order("kickoff_time", { ascending: true });
+  const { data } = await supabase
+    .from("matches")
+    .select("*, home_team:teams!home_team_id(*), away_team:teams!away_team_id(*), stadium:stadiums(*), group:groups(*)")
+    .order("kickoff_time", { ascending: true });
   const matches = (data ?? []) as Match[];
+
+  // Vue chronologique groupée par date
+  const byDate = matches.reduce((acc, m) => {
+    const date = new Date(m.kickoff_time).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(m);
+    return acc;
+  }, {} as Record<string, Match[]>);
+
+  // Vue par groupe
   const byPhase = PHASE_ORDER.reduce((acc, phase) => {
     const phaseMatches = matches.filter((m) => m.phase === phase);
     if (phaseMatches.length > 0) acc[phase] = phaseMatches;
     return acc;
   }, {} as Record<MatchPhase, Match[]>);
+
   const byGroup = (byPhase.group ?? []).reduce((acc, m) => {
     const key = m.group?.name ?? "?";
     if (!acc[key]) acc[key] = [];
@@ -73,34 +89,68 @@ export default async function MatchesPage() {
   }, {} as Record<string, Match[]>);
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div>
-        <h1 className="font-display text-4xl font-bold text-white tracking-wide">MATCHS</h1>
-        <p className="text-gray-500 text-sm mt-1">{matches.length} matchs au programme</p>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-display text-4xl font-bold text-white tracking-wide">MATCHS</h1>
+          <p className="text-gray-500 text-sm mt-1">{matches.length} matchs au programme</p>
+        </div>
+        {/* Toggle vue */}
+        <div className="flex gap-2 bg-surface-800 border border-surface-600 rounded-lg p-1">
+          <Link href="?vue=chrono" className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${vue === "chrono" ? "bg-pitch-600 text-white" : "text-gray-400 hover:text-gray-200"}`}>
+            📅 Par date
+          </Link>
+          <Link href="?vue=groupe" className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${vue === "groupe" ? "bg-pitch-600 text-white" : "text-gray-400 hover:text-gray-200"}`}>
+            🏆 Par groupe
+          </Link>
+        </div>
       </div>
-      {Object.keys(byGroup).length > 0 && (
-        <section>
-          <h2 className="font-display text-2xl font-bold text-pitch-400 mb-4 border-b border-surface-600 pb-2">PHASE DE GROUPES</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {Object.entries(byGroup).sort(([a],[b]) => a.localeCompare(b)).map(([groupName, groupMatches]) => (
-              <div key={groupName}>
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Groupe {groupName}</h3>
-                <div className="space-y-2">{groupMatches.map((m) => <MatchCard key={m.id} match={m} />)}</div>
+
+      {/* VUE CHRONOLOGIQUE */}
+      {vue === "chrono" && (
+        <div className="space-y-6">
+          {Object.entries(byDate).map(([date, dayMatches]) => (
+            <section key={date}>
+              <h2 className="font-display text-lg font-bold text-pitch-400 mb-3 border-b border-surface-600 pb-2 capitalize">
+                {date}
+              </h2>
+              <div className="space-y-2">
+                {dayMatches.map((m) => <MatchCard key={m.id} match={m} />)}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          ))}
+        </div>
       )}
-      {PHASE_ORDER.filter((p) => p !== "group").map((phase) => {
-        const phaseMatches = byPhase[phase];
-        if (!phaseMatches) return null;
-        return (
-          <section key={phase}>
-            <h2 className="font-display text-2xl font-bold text-gold-400 mb-4 border-b border-surface-600 pb-2">{PHASE_LABELS[phase].toUpperCase()}</h2>
-            <div className="space-y-2 max-w-xl">{phaseMatches.map((m) => <MatchCard key={m.id} match={m} />)}</div>
-          </section>
-        );
-      })}
+
+      {/* VUE PAR GROUPE */}
+      {vue === "groupe" && (
+        <div className="space-y-8">
+          {Object.keys(byGroup).length > 0 && (
+            <section>
+              <h2 className="font-display text-2xl font-bold text-pitch-400 mb-4 border-b border-surface-600 pb-2">PHASE DE GROUPES</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                {Object.entries(byGroup).sort(([a],[b]) => a.localeCompare(b)).map(([groupName, groupMatches]) => (
+                  <div key={groupName}>
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Groupe {groupName}</h3>
+                    <div className="space-y-2">{groupMatches.map((m) => <MatchCard key={m.id} match={m} />)}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {PHASE_ORDER.filter((p) => p !== "group").map((phase) => {
+            const phaseMatches = byPhase[phase];
+            if (!phaseMatches) return null;
+            return (
+              <section key={phase}>
+                <h2 className="font-display text-2xl font-bold text-gold-400 mb-4 border-b border-surface-600 pb-2">{PHASE_LABELS[phase].toUpperCase()}</h2>
+                <div className="space-y-2 max-w-xl">{phaseMatches.map((m) => <MatchCard key={m.id} match={m} />)}</div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+
       {matches.length === 0 && (
         <div className="text-center py-20 text-gray-500">
           <div className="text-5xl mb-4">📅</div>
