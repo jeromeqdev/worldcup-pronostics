@@ -2,10 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import type { Match, Prediction, Profile } from "@/types";
 import { PHASE_LABELS } from "@/types";
-import { formatKickoff, canPredict } from "@/lib/utils";
-import { MapPin, Calendar, Users } from "lucide-react";
+import { formatKickoffFr, canPredict } from "@/lib/utils";
+import { MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
 import { PredictionForm } from "@/components/predictions/PredictionForm";
 import { PredictionsList } from "@/components/predictions/PredictionsList";
+import Link from "next/link";
 
 export const revalidate = 30;
 
@@ -16,7 +17,7 @@ interface PageProps {
 function TeamBig({ name, code }: { name?: string; code?: string }) {
   return (
     <div className="flex flex-col items-center gap-2 flex-1">
-      {code && <img src={`https://flagcdn.com/64x48/${code.toLowerCase().replace("gb-eng","gb")}.png`} alt={code} width={64} height={48} className="rounded object-cover shadow-lg" />}
+      {code && <img src={`https://flagcdn.com/64x48/${code.toLowerCase().replace("gb-eng","gb").replace("gb-sct","gb")}.png`} alt={code} width={64} height={48} className="rounded object-cover shadow-lg" />}
       <span className="font-display font-bold text-lg text-white text-center leading-tight">{name ?? "—"}</span>
     </div>
   );
@@ -44,6 +45,12 @@ export default async function MatchDetailPage({ params }: PageProps) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
+      {/* Bouton retour */}
+      <Link href="/matches" className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-200 transition-colors text-sm">
+        <ArrowLeft size={16} />
+        Retour aux matchs
+      </Link>
+
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs text-gray-500 uppercase tracking-widest">
@@ -71,7 +78,7 @@ export default async function MatchDetailPage({ params }: PageProps) {
           <TeamBig name={match.away_team?.name} code={match.away_team?.country_code} />
         </div>
         <div className="flex items-center justify-center gap-4 mt-2 text-xs text-gray-500 flex-wrap">
-          <span className="flex items-center gap-1"><Calendar size={12} />{formatKickoff(match.kickoff_time)}</span>
+          <span className="flex items-center gap-1"><Calendar size={12} />{formatKickoffFr(match.kickoff_time)}</span>
           {match.stadium && <span className="flex items-center gap-1"><MapPin size={12} />{match.stadium.name}, {match.stadium.city}</span>}
           <span className="flex items-center gap-1"><Users size={12} />{predictions.length} pronostic{predictions.length !== 1 ? "s" : ""}</span>
         </div>
