@@ -75,7 +75,7 @@ export function Navbar() {
               <div className="w-8 h-8 rounded-full bg-surface-600 animate-pulse" />
             ) : user && profile ? (
               <div className="flex items-center gap-2">
-                <Link href="/profile" className="flex items-center gap-2 btn-ghost">
+                <Link href="/" className="flex items-center gap-2 btn-ghost">
                   <div className="w-7 h-7 rounded-full bg-pitch-700 flex items-center justify-center">
                     <User size={14} className="text-pitch-300" />
                   </div>
