@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Ranking, Profile } from "@/types";
 import { Trophy, Star, Target, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 export const revalidate = 60;
 
@@ -25,9 +26,9 @@ export default async function RankingPage() {
           <span>#</span>
           <span>Joueur</span>
           <span className="text-center">Points</span>
-          <span className="text-center hidden sm:block">Exact</span>
-          <span className="text-center hidden sm:block">Bons</span>
-          <span className="text-center hidden sm:block">Nuls</span>
+          <span className="text-center hidden sm:block">Score exact</span>
+          <span className="text-center hidden sm:block">Bon vainqueur</span>
+          <span className="text-center hidden sm:block">Bon nul</span>
         </div>
         {rankings.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
@@ -39,7 +40,11 @@ export default async function RankingPage() {
             const isCurrentUser = r.user_id === user?.id;
             const rank = i + 1;
             return (
-              <div key={r.id} className={`grid grid-cols-[40px_1fr_80px_60px_60px_60px] gap-2 px-4 py-3 border-b border-surface-700/50 last:border-0 transition-colors ${isCurrentUser ? "bg-pitch-900/25" : "hover:bg-surface-700/30"}`}>
+              <Link
+                href={`/joueur/${r.profile?.pseudo}`}
+                key={r.id}
+                className={`grid grid-cols-[40px_1fr_80px_60px_60px_60px] gap-2 px-4 py-3 border-b border-surface-700/50 last:border-0 transition-colors hover:bg-surface-700/50 ${isCurrentUser ? "bg-pitch-900/25" : ""}`}
+              >
                 <div className={`flex items-center justify-center font-display font-bold ${rank === 1 ? "text-gold-400 text-xl" : rank === 2 ? "text-gray-300 text-lg" : rank === 3 ? "text-amber-600 text-lg" : "text-gray-500"}`}>
                   {rank <= 3 ? ["🥇","🥈","🥉"][rank-1] : rank}
                 </div>
@@ -67,7 +72,7 @@ export default async function RankingPage() {
                 <div className="hidden sm:flex items-center justify-center">
                   <span className="text-blue-400 font-semibold text-sm">{r.correct_draws}</span>
                 </div>
-              </div>
+              </Link>
             );
           })
         )}
