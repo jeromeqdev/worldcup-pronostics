@@ -8,11 +8,28 @@ export function cn(...inputs: string[]) {
 
 // Heure française (UTC+2 en été)
 export function formatKickoff(dateStr: string): string {
-  return format(new Date(dateStr), "dd MMM yyyy • HH:mm", { locale: fr, timeZone: "Europe/Paris" } as any);
+  const date = new Date(dateStr);
+  const formatted = date.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return formatted.replace(", ", " • ");
 }
 
 export function formatKickoffShort(dateStr: string): string {
-  return format(new Date(dateStr), "dd/MM • HH:mm", { locale: fr } as any);
+  const date = new Date(dateStr);
+  const formatted = date.toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return formatted.replace(", ", " • ");
 }
 
 export function formatKickoffFr(dateStr: string): string {
