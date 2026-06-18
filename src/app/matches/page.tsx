@@ -1,4 +1,3 @@
-
 import { createClient } from "@/lib/supabase/server";
 import type { Match, MatchPhase } from "@/types";
 import { PHASE_LABELS } from "@/types";
@@ -6,6 +5,7 @@ import Link from "next/link";
 import { formatTimeFr, formatDateFr, canPredict } from "@/lib/utils";
 import { MapPin, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { Countdown } from "@/components/ui/Countdown";
+import { ScrollToNext } from "@/components/ui/ScrollToNext";
 
 export const revalidate = 30;
 
@@ -16,62 +16,68 @@ function FlagImg({ code }: { code?: string }) {
   return <img src={`https://flagcdn.com/24x18/${code.toLowerCase().replace("gb-eng","gb").replace("gb-sct","gb")}.png`} alt={code} width={24} height={18} className="rounded-sm" />;
 }
 
-function MatchCard({ match: m, hasPrediction }: { match: Match; hasPrediction: boolean }) {
+function MatchCard({ match: m, hasPrediction, isNext }: { match: Match; hasPrediction: boolean; isNext?: boolean }) {
   const isFinished = m.status === "finished";
   const isLive = m.status === "live";
   const predictable = canPredict(m);
 
   return (
-    <Link href={`/matches/${m.id}`} className="card-hover block relative">
-      {!isFinished && (
-        <div className="absolute -top-1.5 -right-1.5">
-          {hasPrediction ? (
-            <div className="bg-pitch-600 rounded-full p-0.5 shadow-lg" title="Pronostic soumis">
-              <CheckCircle2 size={16} className="text-white" />
-            </div>
-          ) : predictable ? (
-            <div className="bg-gold-500 rounded-full p-0.5 shadow-lg animate-pulse" title="Pronostic manquant">
-              <AlertCircle size={16} className="text-surface-900" />
-            </div>
-          ) : null}
+    <div id={isNext ? "prochain" : undefined}>
+      {isNext && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xs font-bold text-pitch-400 uppercase tracking-widest">⚡ Prochain match</span>
         </div>
       )}
-
-      <div className="flex items-center gap-3">
-        <div className="w-24 shrink-0 text-center">
-          {isFinished ? (
-            <div className="font-display font-bold text-xl text-white">{m.home_score} - {m.away_score}</div>
-          ) : isLive ? (
-            <span className="badge-live flex items-center gap-1 justify-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 live-dot" />Live
-            </span>
-          ) : (
-            <div className="font-bold text-pitch-400 text-sm">{formatTimeFr(m.kickoff_time)}</div>
-          )}
-          {!isFinished && !isLive && predictable && (
-            <div className="mt-1 flex justify-center">
-              <Countdown kickoffTime={m.kickoff_time} />
+      <Link href={`/matches/${m.id}`} className={`card-hover block relative ${isNext ? "ring-2 ring-pitch-500 ring-offset-2 ring-offset-surface-900" : ""}`}>
+        {!isFinished && (
+          <div className="absolute -top-1.5 -right-1.5">
+            {hasPrediction ? (
+              <div className="bg-pitch-600 rounded-full p-0.5 shadow-lg" title="Pronostic soumis">
+                <CheckCircle2 size={16} className="text-white" />
+              </div>
+            ) : predictable ? (
+              <div className="bg-gold-500 rounded-full p-0.5 shadow-lg animate-pulse" title="Pronostic manquant">
+                <AlertCircle size={16} className="text-surface-900" />
+              </div>
+            ) : null}
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <div className="w-24 shrink-0 text-center">
+            {isFinished ? (
+              <div className="font-display font-bold text-xl text-white">{m.home_score} - {m.away_score}</div>
+            ) : isLive ? (
+              <span className="badge-live flex items-center gap-1 justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400 live-dot" />Live
+              </span>
+            ) : (
+              <div className="font-bold text-pitch-400 text-sm">{formatTimeFr(m.kickoff_time)}</div>
+            )}
+            {!isFinished && !isLive && predictable && (
+              <div className="mt-1 flex justify-center">
+                <Countdown kickoffTime={m.kickoff_time} />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 flex items-center gap-2 justify-center">
+            <div className="flex items-center gap-2 flex-row-reverse">
+              {m.home_team?.country_code && <FlagImg code={m.home_team.country_code} />}
+              <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.home_team?.name ?? "—"}</span>
             </div>
-          )}
-        </div>
-        <div className="flex-1 flex items-center gap-2 justify-center">
-          <div className="flex items-center gap-2 flex-row-reverse">
-            {m.home_team?.country_code && <FlagImg code={m.home_team.country_code} />}
-            <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.home_team?.name ?? "—"}</span>
+            <span className="text-gray-600 text-xs font-bold">VS</span>
+            <div className="flex items-center gap-2">
+              {m.away_team?.country_code && <FlagImg code={m.away_team.country_code} />}
+              <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.away_team?.name ?? "—"}</span>
+            </div>
           </div>
-          <span className="text-gray-600 text-xs font-bold">VS</span>
-          <div className="flex items-center gap-2">
-            {m.away_team?.country_code && <FlagImg code={m.away_team.country_code} />}
-            <span className="text-sm font-semibold text-gray-200 truncate max-w-[80px]">{m.away_team?.name ?? "—"}</span>
+          <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500 w-24 shrink-0 justify-end">
+            <MapPin size={11} />
+            <span className="truncate">{m.stadium?.city}</span>
           </div>
+          <ChevronRight size={14} className="text-gray-600 shrink-0" />
         </div>
-        <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500 w-24 shrink-0 justify-end">
-          <MapPin size={11} />
-          <span className="truncate">{m.stadium?.city}</span>
-        </div>
-        <ChevronRight size={14} className="text-gray-600 shrink-0" />
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
 
@@ -99,6 +105,9 @@ export default async function MatchesPage({
     predictedMatchIds = new Set((predictions ?? []).map((p) => p.match_id));
   }
 
+  // Trouver le prochain match à venir
+  const nextMatchId = matches.find((m) => m.status === "upcoming" || m.status === "live")?.id;
+
   const upcomingMatches = matches.filter((m) => m.status === "upcoming");
   const predictedCount = upcomingMatches.filter((m) => predictedMatchIds.has(m.id)).length;
   const missingCount = upcomingMatches.filter((m) => canPredict(m) && !predictedMatchIds.has(m.id)).length;
@@ -125,6 +134,8 @@ export default async function MatchesPage({
 
   return (
     <div className="space-y-6 animate-fade-in">
+      <ScrollToNext targetId="prochain" />
+
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-4xl font-bold text-white tracking-wide">MATCHS</h1>
@@ -170,7 +181,9 @@ export default async function MatchesPage({
                 {date}
               </h2>
               <div className="space-y-2">
-                {dayMatches.map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} />)}
+                {dayMatches.map((m) => (
+                  <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} isNext={m.id === nextMatchId} />
+                ))}
               </div>
             </section>
           ))}
@@ -186,7 +199,7 @@ export default async function MatchesPage({
                 {Object.entries(byGroup).sort(([a],[b]) => a.localeCompare(b)).map(([groupName, groupMatches]) => (
                   <div key={groupName}>
                     <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Groupe {groupName}</h3>
-                    <div className="space-y-2">{groupMatches.map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} />)}</div>
+                    <div className="space-y-2">{groupMatches.map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} isNext={m.id === nextMatchId} />)}</div>
                   </div>
                 ))}
               </div>
@@ -198,7 +211,7 @@ export default async function MatchesPage({
             return (
               <section key={phase}>
                 <h2 className="font-display text-2xl font-bold text-gold-400 mb-4 border-b border-surface-600 pb-2">{PHASE_LABELS[phase].toUpperCase()}</h2>
-                <div className="space-y-2 max-w-xl">{phaseMatches.map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} />)}</div>
+                <div className="space-y-2 max-w-xl">{phaseMatches.map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} isNext={m.id === nextMatchId} />)}</div>
               </section>
             );
           })}
