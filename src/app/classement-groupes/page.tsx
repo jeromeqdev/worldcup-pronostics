@@ -49,8 +49,7 @@ export default async function GroupStandingsPage() {
             const groupTeams = allTeams.filter((t: any) => t.group?.name === groupName);
             const groupMatches = byGroup[groupName];
             const standings = calculateGroupStandings(groupTeams as any, groupMatches);
-            const allPlayed = groupMatches.every((m) => m.status === "finished");
-return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} allMatchesPlayed={allPlayed} />;
+            return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} />;
           })}
         </div>
       )}
