@@ -10,10 +10,14 @@ export interface GroupStanding {
   goalsAgainst: number;
   goalDiff: number;
   points: number;
+  remainingMatches: number;
+  maxPossiblePoints: number;
+  isQualified: boolean;
 }
 
 export function calculateGroupStandings(teams: Team[], matches: Match[]): GroupStanding[] {
   const standings = new Map<string, GroupStanding>();
+  const totalMatchesPerTeam = teams.length - 1; // ex: 3 pour un groupe de 4
 
   teams.forEach((team) => {
     standings.set(team.id, {
@@ -26,6 +30,9 @@ export function calculateGroupStandings(teams: Team[], matches: Match[]): GroupS
       goalsAgainst: 0,
       goalDiff: 0,
       points: 0,
+      remainingMatches: totalMatchesPerTeam,
+      maxPossiblePoints: totalMatchesPerTeam * 3,
+      isQualified: false,
     });
   });
 
@@ -64,12 +71,27 @@ export function calculateGroupStandings(teams: Team[], matches: Match[]): GroupS
 
   standings.forEach((s) => {
     s.goalDiff = s.goalsFor - s.goalsAgainst;
+    s.remainingMatches = totalMatchesPerTeam - s.played;
+    s.maxPossiblePoints = s.points + s.remainingMatches * 3;
   });
 
-  return Array.from(standings.values()).sort((a, b) => {
+  const sorted = Array.from(standings.values()).sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.goalDiff !== a.goalDiff) return b.goalDiff - a.goalDiff;
     if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
     return a.team.name.localeCompare(b.team.name);
   });
+
+  // Qualification mathématique : l'équipe est qualifiée si son nombre de points
+  // actuel est strictement supérieur au maximum atteignable par la 3e équipe (et suivantes)
+  if (sorted.length >= 3) {
+    const thirdPlaceMaxPoints = sorted[2].maxPossiblePoints;
+    sorted.forEach((s, i) => {
+      if (i < 2 && s.points > thirdPlaceMaxPoints) {
+        s.isQualified = true;
+      }
+    });
+  }
+
+  return sorted;
 }
