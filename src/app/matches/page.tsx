@@ -208,7 +208,7 @@ export default async function MatchesPage({
                   const groupTeams = allTeams.filter((t: any) => t.group?.name === groupName);
                   const groupMatches = byGroup[groupName];
                   const standings = calculateGroupStandings(groupTeams as any, groupMatches);
-                  return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} />;
+                 return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} />;
                 })}
               </div>
 

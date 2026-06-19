@@ -58,6 +58,9 @@ export default function AdminMatchesPage() {
     setEditingId(m.id);
     setForm({ match_number: m.match_number.toString(), phase: m.phase, group_id: m.group_id ?? "", home_team_id: m.home_team_id, away_team_id: m.away_team_id, stadium_id: m.stadium_id, kickoff_time: new Date(m.kickoff_time).toISOString().slice(0,16), status: m.status });
     setShowForm(true);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
   };
 
   const handleDelete = async (id: string, num: number) => {
