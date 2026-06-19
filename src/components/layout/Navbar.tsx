@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Calendar, List, LogOut, LogIn, Shield, User, Grid3x3 } from "lucide-react";
+import { Trophy, Calendar, List, LogOut, LogIn, Shield, User, Grid3x3, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/matches", label: "Matchs", icon: Calendar },
   { href: "/classement-groupes", label: "Groupes", icon: Grid3x3 },
   { href: "/ranking", label: "Classement", icon: List },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
 ];
 
 export function Navbar() {
