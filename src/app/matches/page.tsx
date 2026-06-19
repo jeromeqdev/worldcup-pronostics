@@ -3,6 +3,8 @@ import type { Match, MatchPhase } from "@/types";
 import { PHASE_LABELS } from "@/types";
 import Link from "next/link";
 import { formatTimeFr, formatDateFr, canPredict } from "@/lib/utils";
+import { calculateGroupStandings } from "@/lib/standings";
+import { GroupStandingsTable } from "@/components/groups/GroupStandingsTable";
 import { MapPin, ChevronRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { Countdown } from "@/components/ui/Countdown";
 import { ScrollToNext } from "@/components/ui/ScrollToNext";
@@ -96,6 +98,9 @@ export default async function MatchesPage({
     .order("kickoff_time", { ascending: true });
   const matches = (data ?? []) as Match[];
 
+  const { data: teamsData } = await supabase.from("teams").select("*, group:groups(*)");
+  const allTeams = teamsData ?? [];
+
   let predictedMatchIds = new Set<string>();
   if (user) {
     const { data: predictions } = await supabase
@@ -105,7 +110,6 @@ export default async function MatchesPage({
     predictedMatchIds = new Set((predictions ?? []).map((p) => p.match_id));
   }
 
-  // Trouver le prochain match à venir
   const nextMatchId = matches.find((m) => m.status === "upcoming" || m.status === "live")?.id;
 
   const upcomingMatches = matches.filter((m) => m.status === "upcoming");
@@ -131,6 +135,8 @@ export default async function MatchesPage({
     acc[key].push(m);
     return acc;
   }, {} as Record<string, Match[]>);
+
+  const groupNames = Object.keys(byGroup).sort();
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -192,14 +198,26 @@ export default async function MatchesPage({
 
       {vue === "groupe" && (
         <div className="space-y-8">
-          {Object.keys(byGroup).length > 0 && (
+          {groupNames.length > 0 && (
             <section>
               <h2 className="font-display text-2xl font-bold text-pitch-400 mb-4 border-b border-surface-600 pb-2">PHASE DE GROUPES</h2>
+
+              {/* Classements par groupe */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {groupNames.map((groupName) => {
+                  const groupTeams = allTeams.filter((t: any) => t.group?.name === groupName);
+                  const groupMatches = byGroup[groupName];
+                  const standings = calculateGroupStandings(groupTeams as any, groupMatches);
+                  return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} />;
+                })}
+              </div>
+
+              {/* Matchs par groupe */}
               <div className="grid md:grid-cols-2 gap-6">
-                {Object.entries(byGroup).sort(([a],[b]) => a.localeCompare(b)).map(([groupName, groupMatches]) => (
+                {groupNames.map((groupName) => (
                   <div key={groupName}>
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Groupe {groupName}</h3>
-                    <div className="space-y-2">{groupMatches.map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} isNext={m.id === nextMatchId} />)}</div>
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">Groupe {groupName} · Matchs</h3>
+                    <div className="space-y-2">{byGroup[groupName].map((m) => <MatchCard key={m.id} match={m} hasPrediction={predictedMatchIds.has(m.id)} isNext={m.id === nextMatchId} />)}</div>
                   </div>
                 ))}
               </div>
