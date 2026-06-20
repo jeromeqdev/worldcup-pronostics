@@ -6,14 +6,15 @@ import type { Match, Team, Stadium, Group } from "@/types";
 import { PHASE_LABELS } from "@/types";
 import { formatKickoff } from "@/lib/utils";
 import toast from "react-hot-toast";
-import { Plus, Loader, Edit2, Trash2, X, Save } from "lucide-react";
+import { Plus, Loader, Edit2, Trash2, X, Save, AlertTriangle } from "lucide-react";
 
 interface MatchForm {
   match_number: string; phase: string; group_id: string; home_team_id: string;
   away_team_id: string; stadium_id: string; kickoff_time: string; status: string;
+  home_score: string; away_score: string;
 }
 
-const EMPTY_FORM: MatchForm = { match_number: "", phase: "group", group_id: "", home_team_id: "", away_team_id: "", stadium_id: "", kickoff_time: "", status: "upcoming" };
+const EMPTY_FORM: MatchForm = { match_number: "", phase: "group", group_id: "", home_team_id: "", away_team_id: "", stadium_id: "", kickoff_time: "", status: "upcoming", home_score: "", away_score: "" };
 
 export default function AdminMatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -43,10 +44,33 @@ export default function AdminMatchesPage() {
 
   useEffect(() => { fetchAll(); }, []);
 
+  // Scroll automatique vers le premier match à saisir au chargement
+  useEffect(() => {
+    if (!loading && matches.length > 0) {
+      const el = document.getElementById("a-saisir");
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+      }
+    }
+  }, [loading, matches.length]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const payload = { match_number: parseInt(form.match_number), phase: form.phase, group_id: form.group_id || null, home_team_id: form.home_team_id, away_team_id: form.away_team_id, stadium_id: form.stadium_id, kickoff_time: new Date(form.kickoff_time).toISOString(), status: form.status };
+    const payload = {
+      match_number: parseInt(form.match_number),
+      phase: form.phase,
+      group_id: form.group_id || null,
+      home_team_id: form.home_team_id,
+      away_team_id: form.away_team_id,
+      stadium_id: form.stadium_id,
+      kickoff_time: new Date(form.kickoff_time).toISOString(),
+      status: form.status,
+      home_score: form.home_score === "" ? null : parseInt(form.home_score),
+      away_score: form.away_score === "" ? null : parseInt(form.away_score),
+    };
     let error;
     if (editingId) { ({ error } = await supabase.from("matches").update(payload).eq("id", editingId)); }
     else { ({ error } = await supabase.from("matches").insert(payload)); }
@@ -56,7 +80,18 @@ export default function AdminMatchesPage() {
 
   const startEdit = (m: Match) => {
     setEditingId(m.id);
-    setForm({ match_number: m.match_number.toString(), phase: m.phase, group_id: m.group_id ?? "", home_team_id: m.home_team_id, away_team_id: m.away_team_id, stadium_id: m.stadium_id, kickoff_time: new Date(m.kickoff_time).toISOString().slice(0,16), status: m.status });
+    setForm({
+      match_number: m.match_number.toString(),
+      phase: m.phase,
+      group_id: m.group_id ?? "",
+      home_team_id: m.home_team_id,
+      away_team_id: m.away_team_id,
+      stadium_id: m.stadium_id,
+      kickoff_time: new Date(m.kickoff_time).toISOString().slice(0,16),
+      status: m.status,
+      home_score: m.home_score?.toString() ?? "",
+      away_score: m.away_score?.toString() ?? "",
+    });
     setShowForm(true);
     setTimeout(() => {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -70,6 +105,10 @@ export default function AdminMatchesPage() {
   };
 
   if (loading) return <div className="flex justify-center py-20"><Loader size={24} className="animate-spin text-pitch-400" /></div>;
+
+  // Le premier match dont l'heure est passée mais qui n'est pas encore "finished"
+  const now = new Date();
+  const nextToFill = matches.find((m) => m.status !== "finished" && new Date(m.kickoff_time) <= now);
 
   return (
     <div className="space-y-6">
@@ -144,6 +183,14 @@ export default function AdminMatchesPage() {
                 <option value="finished">Terminé</option>
               </select>
             </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Score domicile</label>
+              <input type="number" min="0" value={form.home_score} onChange={(e) => setForm({ ...form, home_score: e.target.value })} className="input" placeholder="—" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Score extérieur</label>
+              <input type="number" min="0" value={form.away_score} onChange={(e) => setForm({ ...form, away_score: e.target.value })} className="input" placeholder="—" />
+            </div>
             <div className="sm:col-span-2 flex gap-3">
               <button type="submit" disabled={saving} className="btn-primary flex items-center gap-2">
                 {saving ? <Loader size={15} className="animate-spin" /> : <Save size={15} />}
@@ -156,22 +203,38 @@ export default function AdminMatchesPage() {
       )}
 
       <div className="space-y-2">
-        {matches.map((m) => (
-          <div key={m.id} className="card flex items-center gap-4">
-            <div className="w-10 text-center text-gray-500 font-display font-bold">#{m.match_number}</div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-gray-200">{(m.home_team as Team)?.name ?? "?"} vs {(m.away_team as Team)?.name ?? "?"}</div>
-              <div className="text-xs text-gray-500">{formatKickoff(m.kickoff_time)} · {(m.stadium as Stadium)?.city}</div>
+        {matches.map((m) => {
+          const isNextToFill = nextToFill?.id === m.id;
+          return (
+            <div key={m.id} id={isNextToFill ? "a-saisir" : undefined}>
+              {isNextToFill && (
+                <div className="flex items-center gap-2 mb-1.5 text-xs font-bold text-gold-400 uppercase tracking-widest">
+                  <AlertTriangle size={13} />
+                  Résultat à saisir
+                </div>
+              )}
+              <div className={`card flex items-center gap-4 ${isNextToFill ? "ring-2 ring-gold-500 ring-offset-2 ring-offset-surface-900" : ""}`}>
+                <div className="w-10 text-center text-gray-500 font-display font-bold">#{m.match_number}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-200">
+                    {(m.home_team as Team)?.name ?? "?"} vs {(m.away_team as Team)?.name ?? "?"}
+                    {m.status === "finished" && (
+                      <span className="ml-2 text-gray-400">({m.home_score} - {m.away_score})</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500">{formatKickoff(m.kickoff_time)} · {(m.stadium as Stadium)?.city}</div>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "finished" ? "badge-finished" : m.status === "live" ? "badge-live" : "badge-upcoming"}`}>
+                  {m.status === "finished" ? "Terminé" : m.status === "live" ? "Live" : "À venir"}
+                </span>
+                <div className="flex gap-1">
+                  <button onClick={() => startEdit(m)} className="btn-ghost p-1.5"><Edit2 size={15} /></button>
+                  <button onClick={() => handleDelete(m.id, m.match_number)} className="btn-ghost p-1.5 text-red-400 hover:text-red-300"><Trash2 size={15} /></button>
+                </div>
+              </div>
             </div>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${m.status === "finished" ? "badge-finished" : m.status === "live" ? "badge-live" : "badge-upcoming"}`}>
-              {m.status === "finished" ? "Terminé" : m.status === "live" ? "Live" : "À venir"}
-            </span>
-            <div className="flex gap-1">
-              <button onClick={() => startEdit(m)} className="btn-ghost p-1.5"><Edit2 size={15} /></button>
-              <button onClick={() => handleDelete(m.id, m.match_number)} className="btn-ghost p-1.5 text-red-400 hover:text-red-300"><Trash2 size={15} /></button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
