@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatKickoff } from "@/lib/utils";
 import toast from "react-hot-toast";
-import { Save, Loader } from "lucide-react";
+import { Save, Loader, AlertTriangle } from "lucide-react";
 
 interface MatchRow {
   id: string;
@@ -36,6 +36,18 @@ export default function AdminResultsPage() {
 
   useEffect(() => { fetchMatches(); }, []);
 
+  // Scroll automatique vers le premier match à saisir
+  useEffect(() => {
+    if (!loading && matches.length > 0) {
+      const el = document.getElementById("a-saisir");
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
+      }
+    }
+  }, [loading, matches.length]);
+
   const handleSave = async (matchId: string) => {
     const ed = editData[matchId];
     if (!ed) return;
@@ -53,6 +65,9 @@ export default function AdminResultsPage() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><Loader size={24} className="animate-spin text-pitch-400" /></div>;
 
+  const now = new Date();
+  const nextToFill = matches.find((m) => m.status !== "finished" && new Date(m.kickoff_time) <= now);
+
   return (
     <div className="space-y-6">
       <div>
@@ -64,27 +79,36 @@ export default function AdminResultsPage() {
           const ed = editData[m.id];
           if (!ed) return null;
           const isSaving = saving === m.id;
+          const isNextToFill = nextToFill?.id === m.id;
           return (
-            <div key={m.id} className="card">
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-gray-500 mb-1">Match #{m.match_number} · {formatKickoff(m.kickoff_time)}</div>
-                  <div className="font-semibold text-gray-200">{m.home_team?.name} vs {m.away_team?.name}</div>
+            <div key={m.id} id={isNextToFill ? "a-saisir" : undefined}>
+              {isNextToFill && (
+                <div className="flex items-center gap-2 mb-1.5 text-xs font-bold text-gold-400 uppercase tracking-widest">
+                  <AlertTriangle size={13} />
+                  Résultat à saisir
                 </div>
-                <div className="flex items-center gap-3">
-                  <input type="number" min="0" value={ed.home} onChange={(e) => update(m.id, "home", e.target.value)} className="score-input w-12" placeholder="–" />
-                  <span className="text-gray-500 font-bold">–</span>
-                  <input type="number" min="0" value={ed.away} onChange={(e) => update(m.id, "away", e.target.value)} className="score-input w-12" placeholder="–" />
+              )}
+              <div className={`card ${isNextToFill ? "ring-2 ring-gold-500 ring-offset-2 ring-offset-surface-900" : ""}`}>
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-gray-500 mb-1">Match #{m.match_number} · {formatKickoff(m.kickoff_time)}</div>
+                    <div className="font-semibold text-gray-200">{m.home_team?.name} vs {m.away_team?.name}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input type="number" min="0" value={ed.home} onChange={(e) => update(m.id, "home", e.target.value)} className="score-input w-12" placeholder="–" />
+                    <span className="text-gray-500 font-bold">–</span>
+                    <input type="number" min="0" value={ed.away} onChange={(e) => update(m.id, "away", e.target.value)} className="score-input w-12" placeholder="–" />
+                  </div>
+                  <select value={ed.status} onChange={(e) => update(m.id, "status", e.target.value)} className="input w-auto text-sm">
+                    <option value="upcoming">À venir</option>
+                    <option value="live">En cours</option>
+                    <option value="finished">Terminé</option>
+                  </select>
+                  <button onClick={() => handleSave(m.id)} disabled={isSaving} className="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-sm">
+                    {isSaving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
+                    <span className="hidden sm:inline">Sauvegarder</span>
+                  </button>
                 </div>
-                <select value={ed.status} onChange={(e) => update(m.id, "status", e.target.value)} className="input w-auto text-sm">
-                  <option value="upcoming">À venir</option>
-                  <option value="live">En cours</option>
-                  <option value="finished">Terminé</option>
-                </select>
-                <button onClick={() => handleSave(m.id)} disabled={isSaving} className="btn-primary flex items-center gap-1.5 px-3 py-1.5 text-sm">
-                  {isSaving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
-                  <span className="hidden sm:inline">Sauvegarder</span>
-                </button>
               </div>
             </div>
           );
