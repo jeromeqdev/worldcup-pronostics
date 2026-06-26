@@ -108,7 +108,8 @@ export default function AdminMatchesPage() {
 
   // Le premier match dont l'heure est passée mais qui n'est pas encore "finished"
   const now = new Date();
-  const nextToFill = matches.find((m) => m.status !== "finished" && new Date(m.kickoff_time) <= now);
+  const nextToFill = matches.find((m) => m.status !== "finished" && new Date(m.kickoff_time) <= now) 
+  ?? matches.find((m) => m.status === "upcoming" && (m.home_team as Team)?.country_code === "tbd");
 
   return (
     <div className="space-y-6">

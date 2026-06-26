@@ -94,7 +94,7 @@ export interface Ranking {
 
 export const PHASE_LABELS: Record<MatchPhase, string> = {
   group: "Phase de groupes",
-  round_of_16: "Huitièmes de finale",
+  round_of_16: "Seizièmes de finale",
   quarter_final: "Quarts de finale",
   semi_final: "Demi-finales",
   third_place: "3e place",
