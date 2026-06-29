@@ -9,6 +9,8 @@ interface Props {
   currentUserId?: string;
 }
 
+const KNOCKOUT_PHASES = ["round_of_16", "quarter_final", "semi_final", "third_place", "final"];
+
 export function PredictionsList({ predictions, match, currentUserId }: Props) {
   if (predictions.length === 0) {
     return (
@@ -20,8 +22,8 @@ export function PredictionsList({ predictions, match, currentUserId }: Props) {
   }
 
   const isFinished = match.status === "finished";
+  const isKnockout = KNOCKOUT_PHASES.includes(match.phase);
 
-  // Trier par points décroissants si match terminé, sinon par date
   const sorted = isFinished
     ? [...predictions].sort((a, b) => (b.points ?? -1) - (a.points ?? -1))
     : predictions;
@@ -38,6 +40,12 @@ export function PredictionsList({ predictions, match, currentUserId }: Props) {
           const isCurrentUser = p.user_id === currentUserId;
           const points = p.points;
           const isWinner = isFinished && points === 5;
+          const isDrawPrediction = isKnockout && p.home_score === p.away_score;
+          const penaltyName = p.penalty_pick === "home"
+            ? match.home_team?.name
+            : p.penalty_pick === "away"
+            ? match.away_team?.name
+            : null;
 
           return (
             <div
@@ -74,21 +82,34 @@ export function PredictionsList({ predictions, match, currentUserId }: Props) {
                   <div className="font-display font-bold text-white text-base">
                     {p.home_score} – {p.away_score}
                   </div>
+                  {/* TAB : affiché si nul en phase éliminatoire */}
+                  {isDrawPrediction && penaltyName && (
+                    <div className="text-xs text-yellow-400 font-semibold">
+                      {penaltyName} TAB
+                    </div>
+                  )}
                 </div>
 
-                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                  p.predicted_winner === "home"
-                    ? "bg-blue-500/15 text-blue-400"
-                    : p.predicted_winner === "away"
-                    ? "bg-orange-500/15 text-orange-400"
-                    : "bg-gray-500/15 text-gray-400"
-                }`}>
-                  {p.predicted_winner === "home"
-                    ? match.home_team?.name
-                    : p.predicted_winner === "away"
-                    ? match.away_team?.name
-                    : "Nul"}
-                </span>
+                {/* Badge vainqueur — adapté pour les TAB */}
+                {isDrawPrediction && penaltyName ? (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400">
+                    {penaltyName} TAB
+                  </span>
+                ) : (
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    p.predicted_winner === "home"
+                      ? "bg-blue-500/15 text-blue-400"
+                      : p.predicted_winner === "away"
+                      ? "bg-orange-500/15 text-orange-400"
+                      : "bg-gray-500/15 text-gray-400"
+                  }`}>
+                    {p.predicted_winner === "home"
+                      ? match.home_team?.name
+                      : p.predicted_winner === "away"
+                      ? match.away_team?.name
+                      : "Nul"}
+                  </span>
+                )}
 
                 {isFinished && points !== null && points !== undefined && (
                   <div className={`points-badge points-${points}`}>
