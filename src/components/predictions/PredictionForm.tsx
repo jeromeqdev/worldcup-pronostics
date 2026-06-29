@@ -33,7 +33,6 @@ export function PredictionForm({ match, userId, existingPrediction, allowPredict
   const showPenaltyPick = isKnockout && isDrawn;
   const canSubmit = validScores && (!showPenaltyPick || penaltyPick !== "");
 
-  // Vainqueur affiché sous les scores
   const getWinnerLabel = () => {
     if (!validScores) return null;
     if (homeNum > awayNum) return `→ ${match.home_team?.name}`;
@@ -73,7 +72,6 @@ export function PredictionForm({ match, userId, existingPrediction, allowPredict
 
   if (!allowPredict && !existingPrediction) return null;
 
-  // Affichage du pronostic existant (mode lecture)
   const penaltyLabel = existingPrediction?.penalty_pick === "home"
     ? match.home_team?.name
     : existingPrediction?.penalty_pick === "away"
@@ -112,7 +110,6 @@ export function PredictionForm({ match, userId, existingPrediction, allowPredict
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Scores */}
           <div className="flex items-center justify-center gap-4">
             <div className="text-center flex-1">
               <div className="text-sm text-gray-400 mb-2">{match.home_team?.name}</div>
@@ -128,13 +125,12 @@ export function PredictionForm({ match, userId, existingPrediction, allowPredict
             </div>
             <div className="text-center flex-1">
               <div className="text-sm text-gray-400 mb-2">{match.away_team?.name}</div>
-              <input type="number" min="99" max="99" value={awayScore}
+              <input type="number" min="0" max="99" value={awayScore}
                 onChange={(e) => { setAwayScore(e.target.value); setPenaltyPick(""); }}
                 className="score-input" placeholder="0" required />
             </div>
           </div>
 
-          {/* Sélecteur TAB — apparaît si égalité en phase éliminatoire */}
           {showPenaltyPick && (
             <div className="bg-surface-800 border border-yellow-500/40 rounded-xl p-3 space-y-2">
               <p className="text-xs text-yellow-400 font-bold uppercase tracking-wide text-center">
@@ -144,18 +140,14 @@ export function PredictionForm({ match, userId, existingPrediction, allowPredict
                 <button type="button"
                   onClick={() => setPenaltyPick("home")}
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    penaltyPick === "home"
-                      ? "bg-blue-600 text-white"
-                      : "bg-surface-700 text-gray-400 hover:bg-surface-600"
+                    penaltyPick === "home" ? "bg-blue-600 text-white" : "bg-surface-700 text-gray-400 hover:bg-surface-600"
                   }`}>
                   {match.home_team?.name}
                 </button>
                 <button type="button"
                   onClick={() => setPenaltyPick("away")}
                   className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    penaltyPick === "away"
-                      ? "bg-blue-600 text-white"
-                      : "bg-surface-700 text-gray-400 hover:bg-surface-600"
+                    penaltyPick === "away" ? "bg-blue-600 text-white" : "bg-surface-700 text-gray-400 hover:bg-surface-600"
                   }`}>
                   {match.away_team?.name}
                 </button>
@@ -166,7 +158,6 @@ export function PredictionForm({ match, userId, existingPrediction, allowPredict
             </div>
           )}
 
-          {/* Barème */}
           <div className="text-center text-xs text-gray-500 bg-surface-700 rounded-lg p-2">
             🏆 Score exact : <strong className="text-gold-400">5 pts</strong> · Bon vainqueur : <strong className="text-pitch-400">3 pts</strong> · Bon nul : <strong className="text-blue-400">2 pts</strong>
           </div>
