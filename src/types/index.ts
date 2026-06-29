@@ -5,11 +5,8 @@ export type MatchPhase =
   | "semi_final"
   | "third_place"
   | "final";
-
 export type MatchStatus = "upcoming" | "live" | "finished";
-
 export type PredictedWinner = "home" | "away" | "draw";
-
 export interface Profile {
   id: string;
   email: string;
@@ -21,12 +18,10 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
-
 export interface Group {
   id: string;
   name: string;
 }
-
 export interface Team {
   id: string;
   name: string;
@@ -34,7 +29,6 @@ export interface Team {
   flag_url?: string;
   group_id?: string;
 }
-
 export interface Stadium {
   id: string;
   name: string;
@@ -42,7 +36,6 @@ export interface Stadium {
   country: string;
   capacity?: number;
 }
-
 export interface Match {
   id: string;
   match_number: number;
@@ -57,6 +50,7 @@ export interface Match {
   away_score?: number;
   home_score_extra?: number;
   away_score_extra?: number;
+  penalty_winner?: string | null;
   created_at: string;
   updated_at: string;
   home_team?: Team;
@@ -65,7 +59,6 @@ export interface Match {
   group?: Group;
   user_prediction?: Prediction | null;
 }
-
 export interface Prediction {
   id: string;
   user_id: string;
@@ -73,12 +66,12 @@ export interface Prediction {
   home_score: number;
   away_score: number;
   predicted_winner?: PredictedWinner;
+  penalty_pick?: string | null;
   points?: number;
   created_at: string;
   updated_at: string;
   profile?: Profile;
 }
-
 export interface Ranking {
   id: string;
   user_id: string;
@@ -91,7 +84,6 @@ export interface Ranking {
   updated_at: string;
   profile?: Profile;
 }
-
 export const PHASE_LABELS: Record<MatchPhase, string> = {
   group: "Phase de groupes",
   round_of_16: "Seizièmes de finale",
@@ -100,13 +92,11 @@ export const PHASE_LABELS: Record<MatchPhase, string> = {
   third_place: "3e place",
   final: "Finale",
 };
-
 export const STATUS_LABELS: Record<MatchStatus, string> = {
   upcoming: "À venir",
   live: "En cours",
   finished: "Terminé",
 };
-
 export const POINTS = {
   EXACT_SCORE: 5,
   CORRECT_WINNER: 3,
