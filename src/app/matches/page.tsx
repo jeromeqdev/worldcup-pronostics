@@ -47,7 +47,16 @@ function MatchCard({ match: m, hasPrediction, isNext }: { match: Match; hasPredi
         <div className="flex items-center gap-3">
           <div className="w-24 shrink-0 text-center">
             {isFinished ? (
-              <div className="font-display font-bold text-xl text-white">{m.home_score} - {m.away_score}</div>
+              <div className="flex flex-col items-center">
+                <div className="font-display font-bold text-xl text-white">
+                  {m.home_score} - {m.away_score}
+                </div>
+                {m.penalty_winner && (
+                  <span className="text-xs text-yellow-400 font-semibold">
+                    {m.penalty_winner === "home" ? m.home_team?.name : m.away_team?.name} aux TAB
+                  </span>
+                )}
+              </div>
             ) : isLive ? (
               <span className="badge-live flex items-center gap-1 justify-center">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-400 live-dot" />Live
@@ -201,18 +210,14 @@ export default async function MatchesPage({
           {groupNames.length > 0 && (
             <section>
               <h2 className="font-display text-2xl font-bold text-pitch-400 mb-4 border-b border-surface-600 pb-2">PHASE DE GROUPES</h2>
-
-              {/* Classements par groupe */}
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                 {groupNames.map((groupName) => {
                   const groupTeams = allTeams.filter((t: any) => t.group?.name === groupName);
                   const groupMatches = byGroup[groupName];
                   const standings = calculateGroupStandings(groupTeams as any, groupMatches);
-                 return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} />;
+                  return <GroupStandingsTable key={groupName} standings={standings} groupName={groupName} />;
                 })}
               </div>
-
-              {/* Matchs par groupe */}
               <div className="grid md:grid-cols-2 gap-6">
                 {groupNames.map((groupName) => (
                   <div key={groupName}>
