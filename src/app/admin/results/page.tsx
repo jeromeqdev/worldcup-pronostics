@@ -25,9 +25,7 @@ export default function AdminResultsPage() {
   const [matches, setMatches] = useState<MatchRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  const [editData, setEditData] = useState
-    Record<string, { home: string; away: string; status: string; penalty_winner: string }>
-  >({});
+  const [editData, setEditData] = useState<Record<string, { home: string; away: string; status: string; penalty_winner: string }>>({});
   const supabase = createClient();
 
   const fetchMatches = async () => {
